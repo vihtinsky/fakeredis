@@ -2401,6 +2401,20 @@ class _DummyParser(object):
         pass
 
 
+class FakeSelector():
+    def can_read(self, timeout=0):
+        return True
+
+    def is_ready_for_command(self, timeout=0):
+        return True
+
+    def close(self):
+        pass
+
+    def errno_from_exception(self, ex):
+        return None
+
+
 class FakeConnection(redis.Connection):
     description_format = "FakeConnection<db=%(db)s>"
 
@@ -2421,11 +2435,15 @@ class FakeConnection(redis.Connection):
         # override them.
         self._parser = _DummyParser()
         self._sock = None
+        self._selector = FakeSelector()
 
     def _connect(self):
         if not self._server.connected:
             raise redis.ConnectionError(CONNECTION_ERROR_MSG)
         return FakeSocket(self._server)
+
+    def connect(self):
+        self._sock = self._connect()
 
     def can_read(self, timeout=0):
         if not self._server.connected:
